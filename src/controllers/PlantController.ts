@@ -188,3 +188,53 @@ export const deletePlant = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Erro ao excluir planta." });
   }
 };
+
+
+export const sellPlant = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    const { quantidade } = req.body ?? {};
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      return res.status(400).json({ message: "ID inválido." });
+    }
+
+    if (!Number.isSafeInteger(quantidade) || quantidade <= 0) {
+      return res.status(400).json({
+        message: "A quantidade deve ser um inteiro maior que zero.",
+      });
+    }
+
+    const planta = await PlantRepository.findPlantaById(id);
+
+    if (!planta) {
+      return res.status(404).json({ message: "Planta não encontrada." });
+    }
+
+    const plantaAtualizada = await PlantRepository.venderPlanta(id, quantidade);
+
+    if (!plantaAtualizada) {
+      return res.status(400).json({
+        message: "Estoque insuficiente para realizar a venda.",
+      });
+    }
+
+    return res.status(200).json(plantaAtualizada);
+  } catch (error) {
+    return res.status(500).json({
+      message: "Erro ao registrar venda.",
+    });
+  }
+};
+
+export const getStockValue = async (req: Request, res: Response) => {
+  try {
+    const resultado = await PlantRepository.calcularValorEstoque();
+    return res.status(200).json(resultado);
+  } catch (error) {
+    return res.status(500).json({
+      message: "Erro ao calcular o valor do estoque.",
+    });
+  }
+};
+
