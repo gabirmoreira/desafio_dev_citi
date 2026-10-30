@@ -154,3 +154,227 @@ Para o `PATCH`, envie só o que vai mudar: `{ "nome": "Maria S. Silva" }`.
 | `SyntaxError: ... is not valid JSON` ou `req.body` chega `undefined` | O corpo não foi como JSON. Cole o JSON puro em **Body → JSON**. |
 
 > Dica: rode `yarn typecheck` antes de testar. A API não mostra erros de tipo ao rodar, mas o `typecheck` mostra todos de uma vez.
+
+
+## Desafio Folhagem e Cia:
+### Loja de plantas
+
+A implementação foi feita com Node.js, Express, TypeScript, Prisma e PostgreSQL, utilizando Docker para executar a API e o banco de dados.
+
+O projeto segue a estrutura de Repository e Controller já utilizada no CRUD de usuários.
+
+Cada planta possui os campos:
+
+- `id`: identificador numérico gerado automaticamente.
+- `nome`: nome popular da planta.
+- `especie`: nome científico.
+- `preco`: preço armazenado em centavos.
+- `estoque`: quantidade disponível.
+- `luminosidade`: SOMBRA, MEIA_SOMBRA ou SOL_PLENO.
+- `petFriendly`: indica se a planta é segura para cães e gatos.
+- `regaACadaDias`: intervalo entre regas, em dias.
+- `createdAt`: data de criação.
+- `updatedAt`: data da última atualização.
+
+### Rotas disponíveis:
+
+**POST /plantas**
+
+Cadastra uma nova planta. Retorna 201 quando o cadastro é realizado.
+
+**GET /plantas**
+
+Lista todas as plantas cadastradas. Também permite filtros por nome, luminosidade e petFriendly, além de ordenação.
+
+**GET /plantas/:id**
+
+Busca uma planta pelo seu identificador.
+
+**PATCH /plantas/:id**
+
+Atualiza somente os campos enviados na requisição.
+
+**DELETE /plantas/:id**
+
+Exclui uma planta. Retorna 204 quando a exclusão é realizada.
+
+**POST /plantas/:id/venda**
+
+Registra uma venda e diminui a quantidade disponível no estoque.
+
+**GET /plantas/estoque/valor-total**
+
+Calcula o valor total do estoque em centavos e a quantidade total de vasos disponíveis.
+
+**GET /plantas/esgotadas**
+
+Lista apenas as plantas com estoque igual a zero.
+
+### Exemplo de cadastro:
+
+Requisição: `POST /plantas`
+
+Corpo da requisição:
+
+```json
+{
+  "nome": "Rosa",
+  "especie": "Rosa spp.",
+  "preco": 3000,
+  "estoque": 12,
+  "luminosidade": "SOL_PLENO",
+  "petFriendly": false,
+  "regaACadaDias": 2
+}
+```
+
+O preço é informado em centavos. Por exemplo, 3000 corresponde a R$ 30,00.
+
+Em um cadastro válido, a API retorna 201 e os dados da planta, incluindo o ID e as datas geradas automaticamente.
+
+### Filtros
+
+A rota GET /plantas permite utilizar diferentes filtros.
+
+Exemplos:
+
+```text
+GET /plantas?luminosidade=SOMBRA
+GET /plantas?petFriendly=true
+GET /plantas?nome=rosa
+GET /plantas?luminosidade=SOMBRA&petFriendly=true
+```
+
+A busca por nome aceita partes do texto e não diferencia letras maiúsculas de minúsculas.
+
+Também é possível ordenar as plantas em ordem crescente:
+
+```text
+GET /plantas?ordem=nome
+GET /plantas?ordem=preco
+```
+
+Os filtros e a ordenação podem ser combinados.
+
+### Regras
+
+No cadastro, todos os campos informados pelo usuário são obrigatórios.
+
+As principais regras são:
+
+- O preço deve ser um número inteiro maior que zero.
+- O estoque deve ser um número inteiro maior ou igual a zero.
+- O intervalo de rega deve ser um inteiro maior ou igual a 1.
+- A luminosidade deve corresponder a um valor do enum Luminosidade.
+- O campo petFriendly deve ser booleano.
+- Na edição, apenas os campos enviados são alterados.
+- Dados inválidos retornam HTTP 400.
+- IDs inexistentes retornam HTTP 404.
+- Erros inesperados retornam HTTP 500.
+
+### Registro de vendas:
+
+Requisição: `POST /plantas/:id/venda`
+
+Exemplo de corpo:
+
+```json
+{
+  "quantidade": 3
+}
+```
+
+A quantidade deve ser um número inteiro positivo.
+
+A API verifica se existe estoque suficiente antes de realizar a venda. Caso a quantidade solicitada seja maior que o estoque disponível, retorna HTTP 400 e não altera a quantidade armazenada.
+
+A redução do estoque utiliza uma atualização condicional no banco, evitando que vendas simultâneas deixem o estoque negativo.
+
+### Valor total do estoque:
+
+Requisição: `GET /plantas/estoque/valor-total`
+
+Exemplo de resposta:
+
+```json
+{
+  "valorTotalEmCentavos": 59880,
+  "totalDeVasos": 12
+}
+```
+
+O valor total é calculado somando o preço multiplicado pelo estoque de cada planta.
+
+Os números do exemplo são ilustrativos. A resposta real depende dos produtos cadastrados.
+
+### Plantas esgotadas:
+
+Requisição: `GET /plantas/esgotadas`
+
+Retorna somente plantas com estoque igual a zero.
+
+Caso não existam plantas esgotadas, retorna uma lista vazia:
+
+```json
+[]
+```
+
+### Seed:
+
+Foi desenvolvido o arquivo `prisma/seed.js`, responsável por cadastrar plantas de exemplo automaticamente.
+
+As plantas utilizadas são Rosa, Violeta e Suculenta.
+
+Para executar:
+
+```bash
+yarn seed
+```
+
+O script verifica se já existe uma planta com o mesmo nome antes de cadastrá-la, evitando duplicações dos exemplos em novas execuções.
+
+### Como executar:
+
+
+Para executar a API, siga as instruções de instalação e configuração apresentadas no início deste README.
+
+Com o ambiente configurado, utilize:
+
+- `docker compose up -d --build` para iniciar a API e o banco.
+- `yarn migration` para aplicar as migrations.
+- `yarn seed` para cadastrar as plantas de exemplo.
+- `yarn typecheck` para verificar o TypeScript.
+
+A API fica disponível em `http://localhost:3001`.
+
+
+### Testes realizados:
+
+A API foi testada localmente com Docker e PostgreSQL.
+
+Foram utilizadas requisições feitas pelo terminal integrado do Visual Studio Code, com comandos curl, e pelo navegador.
+
+Os testes incluíram:
+
+- Cadastro de plantas com dados válidos.
+- Listagem de plantas.
+- Busca por ID.
+- Filtros por luminosidade e petFriendly.
+- Edição de preço e estoque.
+- Exclusão de plantas.
+- Registro de vendas com redução de estoque.
+- Cálculo do valor total do estoque.
+- Rejeição de vendas com estoque insuficiente.
+- Rejeição de preço e luminosidade inválidos.
+- Rejeição de cadastro com campos ausentes.
+- Retorno 404 para planta inexistente.
+- Rejeição de edição com estoque negativo.
+- Busca por nome sem diferenciar maiúsculas e minúsculas.
+- Ordenação por nome e preço.
+- Listagem de plantas esgotadas.
+- Execução repetida do seed sem duplicar as plantas de exemplo.
+
+Ao final, o comando `yarn typecheck` foi executado sem erros.
+
+---
+
