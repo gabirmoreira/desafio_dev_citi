@@ -15,7 +15,7 @@ export const createPlant = async (req: Request, res: Response) => {
       luminosidade,
       petFriendly,
       regaACadaDias,
-    } = req.body;
+    } = req.body ?? {};
 
     if (
       typeof nome !== "string" || !nome.trim() ||
