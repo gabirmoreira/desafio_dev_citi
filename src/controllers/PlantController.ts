@@ -109,3 +109,82 @@ export const readPlantById = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+export const updatePlant = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      return res.status(400).json({ message: "ID inválido." });
+    }
+
+    const planta = await PlantRepository.findPlantaById(id);
+
+    if (!planta) {
+      return res.status(404).json({ message: "Planta não encontrada." });
+    }
+
+    const camposPermitidos = [
+      "nome", "especie", "preco", "estoque",
+      "luminosidade", "petFriendly", "regaACadaDias",
+    ];
+
+    const dados = req.body;
+
+    if (
+      !dados ||
+      typeof dados !== "object" ||
+      Array.isArray(dados) ||
+      Object.keys(dados).some(campo => !camposPermitidos.includes(campo)) ||
+      ("nome" in dados &&
+        (typeof dados.nome !== "string" || !dados.nome.trim())) ||
+      ("especie" in dados &&
+        (typeof dados.especie !== "string" || !dados.especie.trim())) ||
+      ("preco" in dados &&
+        (!Number.isInteger(dados.preco) || dados.preco <= 0)) ||
+      ("estoque" in dados &&
+        (!Number.isInteger(dados.estoque) || dados.estoque < 0)) ||
+      ("luminosidade" in dados &&
+        !luminosidadesValidas.includes(dados.luminosidade)) ||
+      ("petFriendly" in dados &&
+        typeof dados.petFriendly !== "boolean") ||
+      ("regaACadaDias" in dados &&
+        (!Number.isInteger(dados.regaACadaDias) || dados.regaACadaDias < 1))
+    ) {
+      return res.status(400).json({ message: "Dados inválidos para edição." });
+    }
+
+    const plantaAtualizada = await PlantRepository.updatePlanta(id, {
+      ...dados,
+      ...(dados.nome !== undefined && { nome: dados.nome.trim() }),
+      ...(dados.especie !== undefined && { especie: dados.especie.trim() }),
+    });
+
+    return res.status(200).json(plantaAtualizada);
+  } catch (error) {
+    return res.status(500).json({ message: "Erro ao atualizar planta." });
+  }
+};
+
+export const deletePlant = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      return res.status(400).json({ message: "ID inválido." });
+    }
+
+    const planta = await PlantRepository.findPlantaById(id);
+
+    if (!planta) {
+      return res.status(404).json({ message: "Planta não encontrada." });
+    }
+
+    await PlantRepository.deletePlanta(id);
+
+    return res.status(204).send();
+  } catch (error) {
+    return res.status(500).json({ message: "Erro ao excluir planta." });
+  }
+};
