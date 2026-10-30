@@ -35,3 +35,44 @@ export const deletePlanta = async (id: number) => {
     where: { id: id },
   });
 };
+
+
+export const venderPlanta = async (id: number, quantidade: number) => {
+  const resultado = await prisma.planta.updateMany({
+    where: {
+      id,
+      estoque: { gte: quantidade },
+    },
+    data: {
+      estoque: { decrement: quantidade },
+    },
+  });
+
+  if (resultado.count === 0) {
+    return null;
+  }
+
+  return await prisma.planta.findUnique({
+    where: { id },
+  });
+};
+
+export const calcularValorEstoque = async () => {
+  const plantas = await prisma.planta.findMany({
+    select: {
+      preco: true,
+      estoque: true,
+    },
+  });
+
+  return {
+    valorTotalEmCentavos: plantas.reduce(
+      (total, planta) => total + planta.preco * planta.estoque,
+      0
+    ),
+    totalDeVasos: plantas.reduce(
+      (total, planta) => total + planta.estoque,
+      0
+    ),
+  };
+};
