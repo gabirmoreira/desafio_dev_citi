@@ -10,6 +10,7 @@
     "migration:deploy": "prisma migrate deploy",
     "studio": "cross-env DATABASE_HOST=localhost prisma studio",
     "typecheck": "tsc --noEmit",
+    "seed": "cross-env DATABASE_HOST=localhost node prisma/seed.js",
     "build": "swc src --strip-leading-paths --out-dir dist",
     "start": "node dist/server.js",
     "prod": "yarn migration:deploy && yarn build && yarn start"
