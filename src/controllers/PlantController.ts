@@ -52,7 +52,7 @@ export const createPlant = async (req: Request, res: Response) => {
 
 export const readAllPlants = async (req: Request, res: Response) => {
   try {
-    const { luminosidade, petFriendly } = req.query;
+    const { nome, luminosidade, petFriendly } = req.query;
 
     if (
       (luminosidade !== undefined &&
@@ -68,13 +68,19 @@ export const readAllPlants = async (req: Request, res: Response) => {
     }
 
     const plantas = await PlantRepository.findAllPlantas({
-      ...(luminosidade !== undefined && {
-        luminosidade: luminosidade as Luminosidade,
-      }),
-      ...(petFriendly !== undefined && {
-        petFriendly: petFriendly === "true",
-      }),
-    });
+  ...(nome !== undefined && {
+    nome: {
+      contains: nome as string,
+      mode: "insensitive" as const,
+    },
+  }),
+  ...(luminosidade !== undefined && {
+    luminosidade: luminosidade as Luminosidade,
+  }),
+  ...(petFriendly !== undefined && {
+    petFriendly: petFriendly === "true",
+  }),
+});
 
     return res.status(200).json(plantas);
   } catch (error) {
