@@ -23,6 +23,8 @@ routes.get("/plantas", PlantController.readAllPlants);
 // Rotas antes da busca por id
 routes.get("/plantas/estoque/valor-total", PlantController.getStockValue);
 
+routes.get("/plantas/esgotadas", PlantController.readOutOfStockPlants);
+
 routes.get("/plantas/:id", PlantController.readPlantById);
 routes.patch("/plantas/:id", PlantController.updatePlant);
 routes.delete("/plantas/:id", PlantController.deletePlant);

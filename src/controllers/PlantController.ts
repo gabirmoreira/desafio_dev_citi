@@ -252,3 +252,13 @@ export const getStockValue = async (req: Request, res: Response) => {
   }
 };
 
+export const readOutOfStockPlants = async (req: Request, res: Response) => {
+  try {
+    const plantas = await PlantRepository.findPlantasEsgotadas();
+    return res.status(200).json(plantas);
+  } catch (error) {
+    return res.status(500).json({
+      message: "Erro ao listar plantas esgotadas.",
+    });
+  }
+};
