@@ -48,3 +48,64 @@ export const createPlant = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+export const readAllPlants = async (req: Request, res: Response) => {
+  try {
+    const { luminosidade, petFriendly } = req.query;
+
+    if (
+      (luminosidade !== undefined &&
+        (typeof luminosidade !== "string" ||
+          !luminosidadesValidas.includes(luminosidade as Luminosidade))) ||
+      (petFriendly !== undefined &&
+        petFriendly !== "true" &&
+        petFriendly !== "false")
+    ) {
+      return res.status(400).json({
+        message: "Filtros inválidos.",
+      });
+    }
+
+    const plantas = await PlantRepository.findAllPlantas({
+      ...(luminosidade !== undefined && {
+        luminosidade: luminosidade as Luminosidade,
+      }),
+      ...(petFriendly !== undefined && {
+        petFriendly: petFriendly === "true",
+      }),
+    });
+
+    return res.status(200).json(plantas);
+  } catch (error) {
+    return res.status(500).json({
+      message: "Erro ao listar plantas.",
+    });
+  }
+};
+
+export const readPlantById = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      return res.status(400).json({
+        message: "ID inválido.",
+      });
+    }
+
+    const planta = await PlantRepository.findPlantaById(id);
+
+    if (!planta) {
+      return res.status(404).json({
+        message: "Planta não encontrada.",
+      });
+    }
+
+    return res.status(200).json(planta);
+  } catch (error) {
+    return res.status(500).json({
+      message: "Erro ao buscar planta.",
+    });
+  }
+};
