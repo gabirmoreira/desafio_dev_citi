@@ -52,7 +52,7 @@ export const createPlant = async (req: Request, res: Response) => {
 
 export const readAllPlants = async (req: Request, res: Response) => {
   try {
-    const { nome, luminosidade, petFriendly } = req.query;
+    const { nome, luminosidade, petFriendly, ordem } = req.query;
 
     if (
       (luminosidade !== undefined &&
@@ -67,6 +67,14 @@ export const readAllPlants = async (req: Request, res: Response) => {
       });
     }
 
+    if (ordem !== undefined && ordem !== "nome" && ordem !== "preco") {
+        return res.status(400).json({ message: "Ordenação inválida." });
+    }
+
+    const orderBy = ordem
+    ? { [ordem as "nome" | "preco"]: "asc" as const }
+    : undefined;
+
     const plantas = await PlantRepository.findAllPlantas({
   ...(nome !== undefined && {
     nome: {
@@ -80,7 +88,7 @@ export const readAllPlants = async (req: Request, res: Response) => {
   ...(petFriendly !== undefined && {
     petFriendly: petFriendly === "true",
   }),
-});
+}, orderBy);
 
     return res.status(200).json(plantas);
   } catch (error) {
